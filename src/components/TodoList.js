@@ -118,4 +118,4 @@ function TodoList() {
   );
 }
 
-export default TodoList;
+export default TodoList
