@@ -1,106 +1,116 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function TodoList() {
   const [todos, setTodos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // Cargar todos al montar el componente
+  // Cargar todos al iniciar
   useEffect(() => {
-    loadTodos();
+    fetchTodos();
   }, []);
 
-  // GET - Obtener todos los todos
-  const loadTodos = async () => {
+  const fetchTodos = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await fetch('http://localhost:3001/todos');
-      const data = await response.json();
+      const res = await fetch('http://localhost:3001/todos');
+      const data = await res.json();
       setTodos(data);
-    } catch (error) {
-      alert('Error al cargar los todos');
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      alert('Error cargando tareas');
     }
+    setLoading(false);
   };
 
-  // PATCH - Cambiar estado completado
+  // Cambiar estado completado
   const toggleComplete = async (id, completed) => {
-    try {
-      const response = await fetch(`http://localhost:3001/todos/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          completed: !completed
-        }),
-      });
-
-      if (response.ok) {
-        // Actualizar estado local
-        setTodos(todos.map(todo =>
-          todo.id === id
-            ? { ...todo, completed: !completed }
-            : todo
-        ));
-      }
-    } catch (error) {
-      alert('Error al actualizar');
-    }
+    await fetch(`http://localhost:3001/todos/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completed: !completed }),
+    });
+    fetchTodos();
   };
 
-  // DELETE - Eliminar todo
+  // Eliminar tarea
   const deleteTodo = async (id) => {
-    if (!window.confirm('¿Eliminar este todo?')) {
+    await fetch(`http://localhost:3001/todos/${id}`, { method: 'DELETE' });
+    fetchTodos();
+  };
+
+  // Guardar edición
+  const saveEdit = async (id) => {
+    if (!editText.trim()) {
+      alert('El texto no puede estar vacío');
       return;
     }
-
-    try {
-      const response = await fetch(`http://localhost:3001/todos/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        // Remover del estado local
-        setTodos(todos.filter(todo => todo.id !== id));
-      }
-    } catch (error) {
-      alert('Error al eliminar');
-    }
+    await fetch(`http://localhost:3001/todos/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: editText }),
+    });
+    setEditingId(null);
+    setEditText('');
+    fetchTodos();
   };
 
-  if (loading) {
-    return <div>Cargando...</div>;
-  }
+  // Filtrar tareas
+  const filteredTodos = todos.filter(todo => {
+    if (filter === 'all') return true;
+    if (filter === 'completed') return todo.completed;
+    if (filter === 'pending') return !todo.completed;
+    return true;
+  });
 
   return (
     <div>
-      <h2>Mis Todos</h2>
-
-      <Link to="/add">+ Agregar Nuevo Todo</Link>
-
-      {todos.length === 0 ? (
-        <p>No hay todos. <Link to="/add">Crear el primero</Link></p>
+      <h2>Lista de Todos</h2>
+      <div>
+        <button onClick={() => setFilter('all')}>Todos</button>
+        <button onClick={() => setFilter('completed')}>Completados</button>
+        <button onClick={() => setFilter('pending')}>Pendientes</button>
+        <button onClick={() => navigate('/add')}>Agregar Nuevo</button>
+      </div>
+      {loading ? (
+        <p>Cargando...</p>
       ) : (
         <ul>
-          {todos.map(todo => (
-            <li key={todo.id}>
+          {filteredTodos.map(todo => (
+            <li key={todo.id} style={{ margin: '10px 0' }}>
               <input
                 type="checkbox"
                 checked={todo.completed}
                 onChange={() => toggleComplete(todo.id, todo.completed)}
               />
-
-              <span style={{
-                textDecoration: todo.completed ? 'line-through' : 'none'
-              }}>
-                {todo.title}
-              </span>
-
-              <button onClick={() => deleteTodo(todo.id)}>
-                Eliminar
-              </button>
+              {editingId === todo.id ? (
+                <>
+                  <input
+                    value={editText}
+                    onChange={e => setEditText(e.target.value)}
+                  />
+                  <button onClick={() => saveEdit(todo.id)}>Guardar</button>
+                  <button onClick={() => setEditingId(null)}>Cancelar</button>
+                </>
+              ) : (
+                <>
+                  <span style={{
+                    textDecoration: todo.completed ? 'line-through' : 'none',
+                    marginLeft: 8,
+                    marginRight: 8
+                  }}>
+                    {todo.title}
+                  </span>
+                  <button onClick={() => {
+                    setEditingId(todo.id);
+                    setEditText(todo.title);
+                  }}>Editar</button>
+                  <button onClick={() => deleteTodo(todo.id)}>Eliminar</button>
+                </>
+              )}
             </li>
           ))}
         </ul>

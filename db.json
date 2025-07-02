@@ -1,14 +1,19 @@
 {
   "todos": [
     {
-      "id": 1,
+      "id": "1",
       "title": "Aprender React",
       "completed": false
     },
     {
-      "id": 2,
+      "id": "2",
       "title": "Hacer ejercicio",
       "completed": true
+    },
+    {
+      "id": "b27d",
+      "title": "chambear",
+      "completed": false
     }
   ]
 }
