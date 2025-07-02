@@ -7,7 +7,7 @@ function TodoList() {
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchTodos();
@@ -117,5 +117,4 @@ function TodoList() {
     </div>
   );
 }
-
 export default TodoList;
