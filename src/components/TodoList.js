@@ -9,7 +9,6 @@ function TodoList() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Cargar todos al iniciar
   useEffect(() => {
     fetchTodos();
   }, []);
@@ -118,5 +117,3 @@ function TodoList() {
     </div>
   );
 }
-
-export default TodoList;
